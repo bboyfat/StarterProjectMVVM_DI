@@ -7,34 +7,29 @@
 
 import UIKit
 
+import DeclarativeUIKit
+
 
 final class ImageViewController: UIViewController {
 
-    private lazy var imageView: UIImageView = {
-        let iv = UIImageView()
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        return iv
-    }()
+    private lazy var imageView: UIImageView = .create {
+        $0.removeAutoresizing()
+    }
+    private lazy var button: UIButton = .create {
+        $0.removeAutoresizing()
+            .withTitle("DOWNLOAD")
+            .withBackgorundColor(.blue)
+            .applyRoundCorners()
+            .withAction({[weak self] in self?.handleBtnAction()})
+    }
 
-    private lazy var button: UIButton = {
-        let btn = UIButton()
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setTitle("DOWNLOAD", for: .normal)
-        btn.backgroundColor = .blue
-        btn.layer.cornerRadius = 12
-        btn.addTarget(self, action: #selector(handleBtnAction), for: .touchUpInside)
-        return btn
-    }()
-
-    private lazy var label: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 24)
-        label.textAlignment = .center
-        label.textColor = .white
-        label.text = "EMPTY"
-        return label
-    }()
+    private lazy var label: UILabel = .create {
+        $0.removeAutoresizing()
+            .withFont(.systemFont(ofSize: 24))
+            .withTextAlighment(.center)
+            .withTextColor(.white)
+            .withText("EMPTY")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,36 +39,14 @@ final class ImageViewController: UIViewController {
 
 
     private func setupUI() {
-        view.addSubview(imageView)
-        view.addSubview(button)
-        view.addSubview(label)
-
-        NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: view.topAnchor),
-            imageView.leftAnchor.constraint(equalTo: view.leftAnchor),
-            imageView.rightAnchor.constraint(equalTo: view.rightAnchor),
-            imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-
-        NSLayoutConstraint.activate([
-            button.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -58),
-            button.heightAnchor.constraint(equalToConstant: 50),
-            button.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 16),
-            button.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -16)
-        ])
-
-        NSLayoutConstraint.activate([
-            label.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 16),
-            label.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -16),
-            label.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -50)
-        ])
+        layoutImageView()
+        layoutButton()
+        layoutLabel()
     }
 
-    @objc private func handleBtnAction() {
+    private func handleBtnAction() {
         downloadImage()
     }
-
-
     private func downloadImage() {
         let url = URL(string: "https://wallpaperaccess.com/full/2930870.jpg")!
         let session = URLSession.shared
@@ -90,5 +63,30 @@ final class ImageViewController: UIViewController {
                 }
             }
         }.resume()
+    }
+}
+
+// MARK: - Layout
+extension ImageViewController {
+    private func layoutImageView() {
+        view.addSubview(imageView)
+        imageView.clipToSuperview()
+    }
+
+    private func layoutButton() {
+        view.layoutSubview(button) { [
+            $0.bottomAnchor(relativeTo: view.bottomAnchor, -58),
+            $0.leftAnchor(relativeTo: view.leftAnchor, 16),
+            $0.rightAnchor(relativeTo: view.rightAnchor, -16),
+            $0.height(equalTo: 58)
+        ] }
+    }
+
+    private func layoutLabel() {
+        view.layoutSubview(label) { [
+            $0.bottomAnchor(relativeTo: button.topAnchor, -58),
+            $0.leftAnchor(relativeTo: view.leftAnchor, 16),
+            $0.rightAnchor(relativeTo: view.rightAnchor, -16)
+        ] }
     }
 }

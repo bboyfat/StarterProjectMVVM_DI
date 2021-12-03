@@ -8,10 +8,11 @@
 import UIKit
 
 import DeclarativeUIKit
-
+import LoaderView
 
 final class ImageViewController: UIViewController {
 
+    // MARK: - UIComponnents
     private lazy var imageView: UIImageView = .create {
         $0.removeAutoresizing()
     }
@@ -31,10 +32,40 @@ final class ImageViewController: UIViewController {
             .withText("EMPTY")
     }
 
+    // MARK: - Properties
+
+    private var viewModel: ImageViewModelProtocol = ImageViewModel()
+
+
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        bindToViewModel()
         setupUI()
+    }
+
+    private func bindToViewModel() {
+        viewModel.inProgress = { [weak self] isLoading in
+            DispatchQueue.main.async {
+                isLoading ? self?.showLoader() : self?.hideLoader()
+                self?.label.text = "LOADING"
+            }
+        }
+
+        viewModel.imageDataLoaded = { [weak self] imageData in
+            DispatchQueue.main.async {
+                let image = UIImage.init(data: imageData)
+                self?.imageView.image = image
+                self?.label.text = "LOADED"
+            }
+        }
+
+        viewModel.onFailure = { [weak self] in
+            DispatchQueue.main.async {
+                self?.label.text = "ERROR"
+            }
+        }
     }
 
 
@@ -45,25 +76,9 @@ final class ImageViewController: UIViewController {
     }
 
     private func handleBtnAction() {
-        downloadImage()
+        viewModel.fetchImage()
     }
-    private func downloadImage() {
-        let url = URL(string: "https://wallpaperaccess.com/full/2930870.jpg")!
-        let session = URLSession.shared
-        label.text = "EMPTY"
-        self.imageView.image = nil
-        label.text = "DOWNLOADING"
 
-        session.dataTask(with: url) {[unowned self] data, _, _ in
-            if let data = data {
-                DispatchQueue.main.async {
-                    let image = UIImage(data: data)
-                    self.imageView.image = image
-                    self.label.text = "LOADED"
-                }
-            }
-        }.resume()
-    }
 }
 
 // MARK: - Layout

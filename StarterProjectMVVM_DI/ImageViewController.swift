@@ -28,9 +28,11 @@ final class ImageViewController: UIViewController {
 
     private lazy var label: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 24)
         label.textAlignment = .center
         label.textColor = .white
+        label.text = "EMPTY"
         return label
     }()
 
@@ -50,17 +52,20 @@ final class ImageViewController: UIViewController {
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.leftAnchor.constraint(equalTo: view.leftAnchor),
             imageView.rightAnchor.constraint(equalTo: view.rightAnchor),
-            imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
 
+        NSLayoutConstraint.activate([
             button.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -58),
             button.heightAnchor.constraint(equalToConstant: 50),
             button.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 16),
-            button.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -16),
+            button.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -16)
+        ])
 
+        NSLayoutConstraint.activate([
             label.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 16),
             label.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -16),
             label.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -50)
-
         ])
     }
 
@@ -72,12 +77,16 @@ final class ImageViewController: UIViewController {
     private func downloadImage() {
         let url = URL(string: "https://wallpaperaccess.com/full/2930870.jpg")!
         let session = URLSession.shared
+        label.text = "EMPTY"
+        self.imageView.image = nil
+        label.text = "DOWNLOADING"
 
         session.dataTask(with: url) {[unowned self] data, _, _ in
             if let data = data {
                 DispatchQueue.main.async {
                     let image = UIImage(data: data)
                     self.imageView.image = image
+                    self.label.text = "LOADED"
                 }
             }
         }.resume()

@@ -5,6 +5,7 @@
 //  Created by Andrey Petrovskiy on 03.12.2021.
 //
 
+import Combine
 import UIKit
 
 import DeclarativeUIKit
@@ -36,6 +37,8 @@ final class ImageViewController: UIViewController {
 
     private var viewModel: ImageViewModelProtocol = ImageViewModel()
 
+    private var subscriptions = Set<AnyCancellable>()
+
 
 
     override func viewDidLoad() {
@@ -46,28 +49,36 @@ final class ImageViewController: UIViewController {
     }
 
     private func bindToViewModel() {
-        viewModel.inProgress = { [weak self] isLoading in
+        subscriptions = [
+            inProgressSubsribtion(),
+            imageDataSubscription(),
+            onFailureSubscription()
+        ]
+    }
+
+    private func inProgressSubsribtion() -> AnyCancellable {
+        return viewModel.inProgress.sink {[weak self] inProgress in
             DispatchQueue.main.async {
-                isLoading ? self?.showLoader() : self?.hideLoader()
+                inProgress ? self?.showLoader() : self?.hideLoader()
                 self?.label.text = "LOADING"
-            }
-        }
-
-        viewModel.imageDataLoaded = { [weak self] imageData in
-            DispatchQueue.main.async {
-                let image = UIImage.init(data: imageData)
-                self?.imageView.image = image
-                self?.label.text = "LOADED"
-            }
-        }
-
-        viewModel.onFailure = { [weak self] in
-            DispatchQueue.main.async {
-                self?.label.text = "ERROR"
             }
         }
     }
 
+    private func imageDataSubscription() -> AnyCancellable {
+        return viewModel.imageDataLoaded
+            .receive(on: DispatchQueue.main)
+            .compactMap({$0})
+            .map({UIImage(data: $0)})
+            .assign(to: \.image, on: imageView)
+    }
+
+    private func onFailureSubscription() -> AnyCancellable {
+        return viewModel.onFailure
+            .receive(on: DispatchQueue.main)
+            .compactMap({$0})
+            .assign(to: \.text, on: label)
+    }
 
     private func setupUI() {
         layoutImageView()
@@ -79,6 +90,9 @@ final class ImageViewController: UIViewController {
         viewModel.fetchImage()
     }
 
+    deinit {
+        subscriptions.forEach({$0.cancel()})
+    }
 }
 
 // MARK: - Layout
@@ -105,3 +119,8 @@ extension ImageViewController {
         ] }
     }
 }
+
+
+
+
+
